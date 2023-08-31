@@ -1,19 +1,17 @@
 package com.example.letsplay.service;
 
+import com.example.letsplay.exception.ProductException;
+import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.Product;
-import com.example.letsplay.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.example.letsplay.model.User;
 
-@Service
-public class ProductService {
+import javax.validation.ConstraintViolationException;
+import java.util.List;
 
-    @Autowired
-    private ProductRepository productRepo;
-
-    //connect userid to product
-    public Product createProductWithUser(Product product, String userID) {
-        product.setUserId(userID);        // Set the userId on the product
-        return productRepo.save(product); // Save the product with the associated userId
-    }
+public interface ProductService {
+    public void createProduct(Product product) throws ConstraintViolationException, ProductException;
+    public List<Product> getAllProduct() throws ConstraintViolationException, ProductException;
+    public Product getSingleProduct(String id) throws ConstraintViolationException, ProductException;
+    public void updateProduct(String id, Product product) throws ConstraintViolationException, ProductException;
+    public void deleteProduct(String id) throws ConstraintViolationException, ProductException;
 }

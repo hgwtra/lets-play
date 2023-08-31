@@ -1,11 +1,12 @@
 package com.example.letsplay.model;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import javax.validation.constraints.Email;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Data
 @Getter
@@ -18,14 +19,18 @@ import javax.validation.constraints.Email;
 public class User  {
     @Id
     private String id;
-    @NotNull(message = "name cannot be null")
+    @Field
+    @NotBlank(message = "name cannot be empty")
     private String name;
-    @NotNull(message = "email cannot be null")
-    @Email
+    @Field
+    @NotBlank(message = "email cannot be empty")
+    @Email(message = "invalid email format")
     private String email;
-    @NotNull(message = "password cannot be null")
+    @Field
+    @NotBlank(message = "password cannot be empty")
     private String password;
-    @NotNull(message = "role cannot be null")
+    @Field
+    @NotNull(message = "role cannot be empty")
     private String role;
 
 }

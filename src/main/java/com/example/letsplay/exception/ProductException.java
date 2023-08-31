@@ -1,9 +1,13 @@
 package com.example.letsplay.exception;
 
-public class productException extends Exception{
+import java.io.Serial;
+
+public class ProductException extends Exception{
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public productException (String message) {
+    public ProductException(String message) {
         super(message);
     }
 
