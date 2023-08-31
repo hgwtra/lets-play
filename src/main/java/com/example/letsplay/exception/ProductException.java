@@ -15,7 +15,7 @@ public class ProductException extends Exception{
         return "Product with " + id + " not found!";
     }
 
-    public static String productAlreadyExists (String id) {
+    public static String productAlreadyExists() {
         return "Product already exists";
     }
 

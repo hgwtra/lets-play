@@ -26,11 +26,11 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
-    public void createProduct(Product product) throws ConstraintViolationException, ProductException {
-        Optional<Product> productOptional = productRepo.findById(product.getId());
-        if (productOptional.isPresent()) {
-            throw new ProductException(ProductException.productAlreadyExists(product.getId()));
-        } else {
+    public void createProduct(Product product) throws ConstraintViolationException, ProductException, ProductException {
+        Optional<Product> productOptional = productRepo.findByProduct(product);
+        if(productOptional.isPresent()){
+            throw new ProductException(ProductException.productAlreadyExists());
+        } else{
             productRepo.save(product);
         }
     }

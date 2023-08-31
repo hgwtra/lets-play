@@ -26,8 +26,8 @@ public class ProductController {
 
     //Get all products
     @GetMapping("/products")
-    public ResponseEntity<?> getAllProducts() {
-        List<Product> productList = productService();
+    public ResponseEntity<?> getAllProducts() throws ProductException {
+        List<Product> productList = productService.getAllProduct();
         return new ResponseEntity<>(productList, !productList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 

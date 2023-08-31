@@ -13,5 +13,5 @@ public interface ProductRepository
         extends MongoRepository<Product, String> {
 
     @Query("{'products': ?0}")
-    Optional<Product> findByProduct(String id);
+    Optional<Product> findByProduct(Product product);
 }
