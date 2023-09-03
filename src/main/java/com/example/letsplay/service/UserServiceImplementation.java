@@ -4,6 +4,7 @@ import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.User;
 import com.example.letsplay.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
@@ -16,6 +17,8 @@ import java.util.Optional;
 public class UserServiceImplementation implements UserService{
     @Autowired
     private UserRepository userRepo;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     //if the email exits, throws e
     @Override
@@ -24,6 +27,7 @@ public class UserServiceImplementation implements UserService{
         if (userOptional.isPresent()) {
             throw new UserException(UserException.userAlreadyExists());
         } else {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepo.save(user);
         }
     }

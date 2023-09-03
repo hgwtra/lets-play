@@ -12,6 +12,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,14 +28,15 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    //Get all users
+    //Get all users - admin only
     @GetMapping("/users")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getAllUsers() throws UserException {
         List<User> userList = userService.getAllUser();
         return new ResponseEntity<>(userList, !userList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
-    //Create a new user
+    //Create a new user - everyone
     @PostMapping("/users/create")
     public ResponseEntity<?> createUser(@RequestBody User user){
         try {
@@ -49,7 +51,7 @@ public class UserController {
         }
     }
 
-    //Get single user
+    //Get single user - admin, user can only get themselves
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getSingleUser(@PathVariable("id") String id){
         try {
@@ -59,7 +61,7 @@ public class UserController {
         }
     }
 
-    //Update a user
+    //Update a user - admin, user can only update themselves
     @PutMapping("/users/{id}")
     public ResponseEntity<?> updateById(@PathVariable("id") String id, @RequestBody User user) {
         try {
@@ -72,7 +74,7 @@ public class UserController {
         }
     }
 
-    //Delete a user
+    //Delete a user - admin, user can only delete themselves
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteById(@PathVariable("id") String id) throws UserException {
             try{
@@ -81,6 +83,6 @@ public class UserController {
             } catch (UserException e){
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
-        }
+    }
 }
 
