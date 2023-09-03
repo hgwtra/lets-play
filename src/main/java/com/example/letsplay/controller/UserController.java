@@ -7,7 +7,6 @@ import java.util.Optional;
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.User;
 import com.example.letsplay.model.UserAuthentication;
-import com.example.letsplay.repository.UserRepository;
 import com.example.letsplay.service.JwtService;
 import com.example.letsplay.service.UserService;
 import jakarta.validation.ConstraintViolationException;
@@ -92,7 +91,7 @@ public class UserController {
             }
     }
 
-    @PostMapping("/authenticate")
+    @PostMapping("/users/login")
     public String getToken(@RequestBody UserAuthentication userInfo) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userInfo.getUsername(), userInfo.getPassword()));
         if (authentication.isAuthenticated()) {
