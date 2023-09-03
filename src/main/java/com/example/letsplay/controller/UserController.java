@@ -6,13 +6,19 @@ import java.util.Optional;
 
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.User;
+import com.example.letsplay.model.UserAuthentication;
 import com.example.letsplay.repository.UserRepository;
+import com.example.letsplay.service.JwtService;
 import com.example.letsplay.service.UserService;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,12 +30,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class UserController {
     @Autowired
-    private UserRepository userRepo;
-    @Autowired
     private UserService userService;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     //Get all users - admin only
-    @GetMapping("/users")
+    @GetMapping("/users/all")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> getAllUsers() throws UserException {
         List<User> userList = userService.getAllUser();
@@ -57,8 +65,7 @@ public class UserController {
         try {
             return new ResponseEntity<>(userService.getSingleUser(id), HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        }
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);}
     }
 
     //Update a user - admin, user can only update themselves
@@ -83,6 +90,16 @@ public class UserController {
             } catch (UserException e){
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
+    }
+
+    @PostMapping("/authenticate")
+    public String getToken(@RequestBody UserAuthentication userInfo) {
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userInfo.getUsername(), userInfo.getPassword()));
+        if (authentication.isAuthenticated()) {
+            return jwtService.generateToken(userInfo.getUsername());
+        } else {
+            throw new UsernameNotFoundException("Invalid credentials");
+        }
     }
 }
 
