@@ -35,10 +35,6 @@ public class UserController {
     private JwtService jwtService;
     @Autowired
     private AuthenticationManager authenticationManager;
-    @Autowired
-    private UserRepository userRepo;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     //Get all users - admin only
     @GetMapping("/users/all")
@@ -50,7 +46,6 @@ public class UserController {
 
     //Create a new user - everyone
     @PostMapping("/users/create")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> createUser(@RequestBody User user){
         try {
             userService.createUser(user);
@@ -89,7 +84,7 @@ public class UserController {
     }
 
     //Delete a user - admin, user can only delete themselves
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/users/delete/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> deleteById(@PathVariable("id") String id) throws UserException {
             try{
@@ -99,7 +94,7 @@ public class UserController {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
     }
-    //when deleting an user, delete associated products that belongs to it
+    //when deleting a user, delete associated products that belongs to it
 
     @PostMapping("/users/login")
     public String getToken(@RequestBody UserAuthentication userInfo) {

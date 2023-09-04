@@ -22,4 +22,9 @@ public class UserException extends Exception{
         return "User with the given email already exists";
     }
 
+    public static String invalidUpdates () {
+        //How to change this to bad request
+        return "Fields can't be all spaces\nRole must either be ROLE_ADMIN or ROLE_USER\nPassword must be at least 4 characters, maximum 50 characters, no spaces allowed";
+    }
+
 }

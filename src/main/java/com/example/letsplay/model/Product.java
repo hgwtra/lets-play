@@ -32,6 +32,6 @@ public class Product {
     @NotNull(message = "price cannot be empty")
     private double price;
     @Field
-    @NotBlank(message = "price cannot be empty")
+    @NotNull(message = "userID cannot be empty")
     private String userId;
 }

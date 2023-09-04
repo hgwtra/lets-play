@@ -59,6 +59,7 @@ public class ProductController {
     }
     //Update a product - everyone
     @PutMapping("/products/update/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> updateProductById(@PathVariable("id") String id, @RequestBody Product product) throws ProductException{
         try {
             productService.updateProduct(id, product);
@@ -71,6 +72,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/products/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> deleteProductById(@PathVariable("id") String id) throws ProductException {
         try{
             productService.deleteProduct(id);

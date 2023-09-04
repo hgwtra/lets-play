@@ -20,20 +20,41 @@ public class ProductServiceImplementation implements ProductService{
 
     @Autowired
     private ProductRepository productRepo;
+    @Autowired
+    private UserRepository userRepository;
 
-    //connect userid to product
-    public Product createProductWithUser(Product product, String userID) {
-        product.setUserId(userID);        // Set the userId on the product
-        return productRepo.save(product); // Save the product with the associated userId
+    private boolean isValidUserID(String userID, UserRepository userRepository) {
+        Optional<User> userOptional = userRepository.findById(userID);
+        return userOptional.isPresent();
+    }
+
+    private boolean isNotBlank(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private String removeExtraSpaces(String value) {
+        return value.replaceAll("\\s+", " ").trim();
+    }
+
+    private boolean isValid(Product product, UserRepository userRepository) {
+        return isNotBlank(product.getName()) && isNotBlank(product.getDescription())
+                && isValidUserID(product.getUserId().trim(), userRepository);
     }
 
     @Override
-    public void createProduct(Product product) throws ConstraintViolationException, ProductException, ProductException {
+    public void createProduct(Product product) throws ConstraintViolationException, ProductException {
         Optional<Product> productOptional = productRepo.findByProduct(product);
-        if(productOptional.isPresent()){
+        if (productOptional.isPresent()) {
             throw new ProductException(ProductException.productAlreadyExists());
-        } else{
-            productRepo.save(product);
+        } else {
+            if (isValid(product, userRepository)) {
+                product.setDescription(removeExtraSpaces(product.getDescription()));
+                product.setName(removeExtraSpaces(product.getName()));
+                product.setUserId(product.getUserId().trim());
+                productRepo.save(product);
+            } else {
+                throw new ConstraintViolationException("Fields can't be all spaces\nUser ID must exist in the database", null);
+            }
         }
     }
 
