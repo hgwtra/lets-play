@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
 import javax.validation.ConstraintViolationException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +29,23 @@ public class UserServiceImplementation implements UserService{
         if (userOptional.isPresent()) {
             throw new UserException(UserException.userAlreadyExists());
         } else {
+            //String salt = generateRandomSalt(); // Generate a random salt
+            //String saltedPassword = salt + user.getPassword();
+            //String hashedPassword = passwordEncoder.encode(saltedPassword);
+            //user.setPassword(hashedPassword);
+            //userRepo.save(user);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepo.save(user);
         }
     }
+
+    private String generateRandomSalt() {
+        SecureRandom random = new SecureRandom();
+        byte[] saltBytes = new byte[12];
+        random.nextBytes(saltBytes);
+        return Base64.getEncoder().encodeToString(saltBytes);
+    }
+
 
     @Override
     public List<User> getAllUser() throws ConstraintViolationException, UserException {

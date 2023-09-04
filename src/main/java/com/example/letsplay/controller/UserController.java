@@ -1,12 +1,12 @@
 package com.example.letsplay.controller;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.User;
 import com.example.letsplay.model.UserAuthentication;
+import com.example.letsplay.repository.UserRepository;
 import com.example.letsplay.service.JwtService;
 import com.example.letsplay.service.UserService;
 import jakarta.validation.ConstraintViolationException;
@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +35,10 @@ public class UserController {
     private JwtService jwtService;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private UserRepository userRepo;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     //Get all users - admin only
     @GetMapping("/users/all")
@@ -45,6 +50,7 @@ public class UserController {
 
     //Create a new user - everyone
     @PostMapping("/users/create")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> createUser(@RequestBody User user){
         try {
             userService.createUser(user);
@@ -60,7 +66,8 @@ public class UserController {
 
     //Get single user - admin, user can only get themselves
     @GetMapping("/users/{id}")
-    public ResponseEntity<?> getSingleUser(@PathVariable("id") String id){
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    public ResponseEntity<?> getSingleUser(@PathVariable("id") String id, Authentication authentication){
         try {
             return new ResponseEntity<>(userService.getSingleUser(id), HttpStatus.OK);
         } catch (Exception e) {
@@ -69,6 +76,7 @@ public class UserController {
 
     //Update a user - admin, user can only update themselves
     @PutMapping("/users/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> updateById(@PathVariable("id") String id, @RequestBody User user) {
         try {
             userService.updateUser(id, user);
@@ -82,6 +90,7 @@ public class UserController {
 
     //Delete a user - admin, user can only delete themselves
     @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> deleteById(@PathVariable("id") String id) throws UserException {
             try{
                 userService.deleteUser(id);
@@ -90,6 +99,7 @@ public class UserController {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
     }
+    //when deleting an user, delete associated products that belongs to it
 
     @PostMapping("/users/login")
     public String getToken(@RequestBody UserAuthentication userInfo) {
