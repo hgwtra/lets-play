@@ -1,0 +1,8 @@
+server:
+  ssl:
+    key-alias: springboot-https
+    key-store: classpath:keystore.p12
+    key-store-password: password
+    key-store-type: PKCS12
+
+  port: 2222
