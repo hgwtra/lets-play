@@ -89,6 +89,9 @@ public class ProductServiceImplementation implements ProductService{
             productToUpdate.setDescription(product.getDescription());
             productToUpdate.setPrice(product.getPrice());
             productToUpdate.setUserId(product.getUserId());
+            if (!isValid(productToUpdate, userRepository)){
+
+            }
             productRepo.save(productToUpdate);
         } else {
             throw new ProductException(ProductException.NotFoundException(id));

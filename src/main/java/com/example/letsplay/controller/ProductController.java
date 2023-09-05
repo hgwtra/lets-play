@@ -57,7 +57,7 @@ public class ProductController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
-    //Update a product - everyone
+    //Update a product - admin and users
     @PutMapping("/products/update/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<?> updateProductById(@PathVariable("id") String id, @RequestBody Product product) throws ProductException{

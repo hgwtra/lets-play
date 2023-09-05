@@ -17,6 +17,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +38,9 @@ public class UserController {
     private JwtService jwtService;
     @Autowired
     private AuthenticationManager authenticationManager;
+    @Autowired
+    private UserRepository userRepo;
+
 
     //Get all users - admin only
     @GetMapping("/users/all")
@@ -61,31 +67,50 @@ public class UserController {
 
     //Get single user - admin, user can only get themselves
     @GetMapping("/users/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<?> getSingleUser(@PathVariable("id") String id, Authentication authentication){
-        try {
+    public ResponseEntity<?> getSingleUser(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails userDetails) throws UserException {
+        Optional<User> user = userRepo.findById(id);
+        if (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")) && user.get().getEmail().equals(userDetails.getUsername())) {
             return new ResponseEntity<>(userService.getSingleUser(id), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);}
-    }
-
-    //Update a user - admin, user can only update themselves
-    @PutMapping("/users/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
-    public ResponseEntity<?> updateById(@PathVariable("id") String id, @RequestBody User user) {
-        try {
-            userService.updateUser(id, user);
-            return new ResponseEntity<>("Updated User with id" + id, HttpStatus.OK);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-        } catch (UserException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>("Access denied", HttpStatus.NOT_FOUND);
         }
     }
 
-    //Delete a user - admin, user can only delete themselves
+
+
+    //Update a user - admin, user can only update themselves
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateById(
+            @PathVariable("id") String id,
+            @RequestBody User user,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Optional<User> existingUser = userRepo.findById(id);
+
+        if (existingUser.isEmpty()) {
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
+
+        User sameUser = existingUser.get();
+
+        if (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")) && user.getEmail().equals(userDetails.getUsername()))) {
+            try {
+                userService.updateUser(id, user);
+                return new ResponseEntity<>("Updated User with id " + id, HttpStatus.OK);
+
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+            } catch (UserException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+            }
+        } else {
+            return new ResponseEntity<>("Access denied", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    //Delete a user - admin
     @DeleteMapping("/users/delete/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> deleteById(@PathVariable("id") String id) throws UserException {
             try{
                 userService.deleteUser(id);
@@ -94,7 +119,6 @@ public class UserController {
                 return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
             }
     }
-    //when deleting a user, delete associated products that belongs to it
 
     @PostMapping("/users/login")
     public String getToken(@RequestBody UserAuthentication userInfo) {
