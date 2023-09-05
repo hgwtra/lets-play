@@ -3,9 +3,12 @@ package com.example.letsplay.service;
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.Product;
 import com.example.letsplay.model.User;
+import com.example.letsplay.model.UserDTO;
 import com.example.letsplay.repository.ProductRepository;
 import com.example.letsplay.repository.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +16,7 @@ import javax.swing.text.html.Option;
 import javax.validation.ConstraintViolationException;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImplementation implements UserService{
@@ -22,6 +26,17 @@ public class UserServiceImplementation implements UserService{
     private PasswordEncoder passwordEncoder;
     @Autowired
     private ProductRepository productRepo;
+    @Autowired
+    private ModelMapper modelMapper;
+
+    public UserDTO convertToDto(User user) {
+        return modelMapper.map(user, UserDTO.class);
+    }
+    public List<UserDTO> convertToDtos(List<User> users) {
+        return users.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
 
     private boolean isValidRole(String role) {
         return role.equalsIgnoreCase("ROLE_ADMIN") || role.equalsIgnoreCase("ROLE_USER");
@@ -72,23 +87,27 @@ public class UserServiceImplementation implements UserService{
     }
 
 
+
     @Override
-    public List<User> getAllUser() throws ConstraintViolationException, UserException {
-        List<User> allUsers = userRepo.findAll();
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    public List<UserDTO> getAllUser() throws ConstraintViolationException, UserException {
+        List<User> allUsersList = userRepo.findAll();
+        List<UserDTO> allUsers = convertToDtos(allUsersList);
         if (!allUsers.isEmpty()) {
             return allUsers;
         } else {
-            return new ArrayList<User>();
+            return new ArrayList<UserDTO>();
         }
     }
 
     @Override
-    public User getSingleUser(String id) throws ConstraintViolationException, UserException {
+    public UserDTO getSingleUser(String id) throws ConstraintViolationException, UserException {
         Optional<User> singleUser = userRepo.findById(id);
         if (!singleUser.isPresent()) {
             throw new UserException(UserException.NotFoundException(id));
         } else {
-            return singleUser.get();
+            UserDTO singleUserDto = convertToDto(singleUser.get());
+            return singleUserDto;
         }
     }
 

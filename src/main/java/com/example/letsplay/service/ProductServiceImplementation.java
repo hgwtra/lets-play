@@ -3,9 +3,12 @@ package com.example.letsplay.service;
 import com.example.letsplay.exception.ProductException;
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.Product;
+import com.example.letsplay.model.ProductDTO;
 import com.example.letsplay.model.User;
+import com.example.letsplay.model.UserDTO;
 import com.example.letsplay.repository.ProductRepository;
 import com.example.letsplay.repository.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImplementation implements ProductService{
@@ -22,6 +26,23 @@ public class ProductServiceImplementation implements ProductService{
     private ProductRepository productRepo;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ModelMapper modelMapper;
+
+    public ProductDTO convertToDto(Product product) {
+        ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+        Optional<User> user = userRepository.findById(product.getUserId());
+        if (user.isPresent()) {
+            productDTO.setOwner(user.get().getName());
+        }
+        return productDTO;
+    }
+
+    public List<ProductDTO> convertToDtos(List<Product> products) {
+        return products.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
 
     private boolean isValidUserID(String userID, UserRepository userRepository) {
         Optional<User> userOptional = userRepository.findById(userID);
@@ -59,22 +80,24 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
-    public List<Product> getAllProduct() throws ConstraintViolationException, ProductException {
+    public List<ProductDTO> getAllProduct() throws ConstraintViolationException, ProductException {
         List<Product> allProducts = productRepo.findAll();
-        if (!allProducts.isEmpty()) {
-            return allProducts;
+        List<ProductDTO> allProductsDTO = convertToDtos(allProducts);
+        if (!allProductsDTO.isEmpty()) {
+            return allProductsDTO;
         } else {
-            return new ArrayList<Product>();
+            return new ArrayList<ProductDTO>();
         }
     }
 
     @Override
-    public Product getSingleProduct(String id) throws ConstraintViolationException, ProductException {
+    public ProductDTO getSingleProduct(String id) throws ConstraintViolationException, ProductException {
         Optional<Product> singleProduct = productRepo.findById(id);
         if (!singleProduct.isPresent()) {
             throw new ProductException(ProductException.NotFoundException(id));
         } else {
-            return singleProduct.get();
+            ProductDTO singleProductDTO = convertToDto(singleProduct.get());
+            return singleProductDTO;
         }
     }
 

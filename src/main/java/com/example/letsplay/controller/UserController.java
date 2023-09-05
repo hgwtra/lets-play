@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.User;
 import com.example.letsplay.model.UserAuthentication;
+import com.example.letsplay.model.UserDTO;
 import com.example.letsplay.repository.UserRepository;
 import com.example.letsplay.service.JwtService;
 import com.example.letsplay.service.UserService;
@@ -13,6 +14,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -46,11 +48,11 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
 
-    //Get all users - admin only
+
     @GetMapping("/users/all")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     public ResponseEntity<?> getAllUsers() throws UserException {
-        List<User> userList = userService.getAllUser();
+        List<UserDTO> userList = userService.getAllUser();
         return new ResponseEntity<>(userList, !userList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
@@ -79,7 +81,6 @@ public class UserController {
             return new ResponseEntity<>("Access denied", HttpStatus.NOT_FOUND);
         }
     }
-
 
 
     //Update a user - admin, user can only update themselves
@@ -114,7 +115,7 @@ public class UserController {
 
     //Delete a user - admin
     @DeleteMapping("/users/delete/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<?> deleteById(@PathVariable("id") String id) throws UserException {
             try{
                 userService.deleteUser(id);

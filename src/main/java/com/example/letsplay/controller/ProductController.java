@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.example.letsplay.exception.ProductException;
 import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.Product;
+import com.example.letsplay.model.ProductDTO;
 import com.example.letsplay.model.User;
 import com.example.letsplay.repository.ProductRepository;
 import com.example.letsplay.service.ProductService;
@@ -28,7 +29,7 @@ public class ProductController {
     //Get all products - everyone
     @GetMapping("/products")
     public ResponseEntity<?> getAllProducts() throws ProductException {
-        List<Product> productList = productService.getAllProduct();
+        List<ProductDTO> productList = productService.getAllProduct();
         return new ResponseEntity<>(productList, !productList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
