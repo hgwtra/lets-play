@@ -15,8 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -40,6 +42,8 @@ public class UserController {
     private AuthenticationManager authenticationManager;
     @Autowired
     private UserRepository userRepo;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
 
     //Get all users - admin only
@@ -121,13 +125,29 @@ public class UserController {
     }
 
     @PostMapping("/users/login")
-    public String getToken(@RequestBody UserAuthentication userInfo) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userInfo.getUsername(), userInfo.getPassword()));
-        if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(userInfo.getUsername());
-        } else {
-            throw new UsernameNotFoundException("Invalid credentials");
+    public ResponseEntity<String> getToken(@RequestBody UserAuthentication userInfo) {
+        try {
+            Optional<User> userOptional = userRepo.findByEmail(userInfo.getUsername());
+
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+                String salt = user.getId();
+
+                String saltedPassword = userInfo.getPassword() + salt;
+                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userInfo.getUsername(), saltedPassword));
+
+                if (authentication.isAuthenticated()) {
+                    return ResponseEntity.ok(jwtService.generateToken(userInfo.getUsername()));
+                } else {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication error");
         }
     }
+
 }
 

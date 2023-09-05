@@ -27,4 +27,8 @@ public class UserException extends Exception{
         return "Fields can't be all spaces\nRole must either be ROLE_ADMIN or ROLE_USER\nPassword must be at least 4 characters, maximum 50 characters, no spaces allowed";
     }
 
+    public static String invalidCredentials() {
+        return "Invalid Credentials";
+    }
+
 }

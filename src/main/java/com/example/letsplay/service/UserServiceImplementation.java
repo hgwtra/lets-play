@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.swing.text.html.Option;
 import javax.validation.ConstraintViolationException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserServiceImplementation implements UserService{
@@ -57,24 +54,21 @@ public class UserServiceImplementation implements UserService{
             if (isValid(user)) {
                 user.setRole(user.getRole().toUpperCase());
                 user.setName(removeExtraSpaces(user.getName()));
-                //String salt = generateRandomSalt(); // Generate a random salt
-                //String saltedPassword = salt + user.getPassword();
-                //String hashedPassword = passwordEncoder.encode(saltedPassword);
-                //user.setPassword(hashedPassword);
-                //userRepo.save(user);
-                user.setPassword(passwordEncoder.encode(user.getPassword()));
+                String userId = "";
+                do {
+                    userId = UUID.randomUUID().toString().split("-")[0];
+                } while (userRepo.existsById(userId));
+                user.setId(userId);
+                String salt = user.getId();
+                String saltedPassword = user.getPassword() + salt;
+                //System.out.println("salted Password when create " + saltedPassword);
+                String hashedPassword = passwordEncoder.encode(saltedPassword);
+                user.setPassword(hashedPassword);
                 userRepo.save(user);
             } else {
                 throw new ConstraintViolationException("Fields can't be all spaces\nRole must either be ROLE_ADMIN or ROLE_USER\nPassword must be at least 4 characters, maximum 50 characters, no spaces allowed", null);
             }
         }
-    }
-
-    private String generateRandomSalt() {
-        SecureRandom random = new SecureRandom();
-        byte[] saltBytes = new byte[12];
-        random.nextBytes(saltBytes);
-        return Base64.getEncoder().encodeToString(saltBytes);
     }
 
 

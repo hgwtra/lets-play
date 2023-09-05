@@ -1,5 +1,6 @@
 package com.example.letsplay.model;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @NoArgsConstructor
 public class UserAuthentication {
     @Field
+    @Email
     @NotBlank(message = "please enter your email")
     private String username;
     @Field
