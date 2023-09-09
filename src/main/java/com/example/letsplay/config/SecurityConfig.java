@@ -24,7 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class SecurityConfig {
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
@@ -36,16 +36,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-         return http.csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/users/create","/users/login", "/products/create", "/products", "/products/get/{id}").permitAll()
-                .and()
-                .authorizeHttpRequests()
-                .requestMatchers("/users/all", "/users/**", "/products/update/{id}", "/products/delete/{id}").authenticated()
-                .and()
-                 .sessionManagement()
-                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                 .and()
+         return http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/users/create","/users/login", "/products/create", "/products", "/products/get/{id}").permitAll()
+                        .anyRequest().authenticated()
+                )
+                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                  .authenticationProvider(authenticationProvider())
                  .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                  .build();
