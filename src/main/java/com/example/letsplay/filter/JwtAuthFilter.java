@@ -50,12 +50,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
-            } else if (!request.getRequestURI().equals("/users/login") &&
-                    !request.getRequestURI().equals("/users/create") &&
-                    !request.getRequestURI().equals("/products") &&
-                    request.getRequestURI().matches("/products/get/\\d+")) {  // For URIs with variable parts like {id}, you can use regex. Here \d+ matches one or more digits.
-                sendErrorResponse(response, "Authentication is needed");
-                return;
             }
 
             filterChain.doFilter(request, response);
