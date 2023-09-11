@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Data
 @Getter
 @Setter
+@Builder
 @Document(collection = "products")
 @AllArgsConstructor
 @NoArgsConstructor

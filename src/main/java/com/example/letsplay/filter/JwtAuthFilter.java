@@ -26,24 +26,52 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        String username = null;
-        String token = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            username = jwtService.extractUsername(token);
-        }
+        try{
+            String authHeader = request.getHeader("Authorization");
+            String username = null;
+            String token = null;
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userInfoService.loadUserByUsername(username);
-            if (jwtService.validateToken(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    token = authHeader.substring(7);
+                    try {
+                        username = jwtService.extractUsername(token);
+                    } catch(Exception e) {
+                        sendErrorResponse(response, "Invalid JWT token.");
+                        return;
+                    }
             }
+
+            String uri = request.getRequestURI();
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+               UserDetails userDetails = userInfoService.loadUserByUsername(username);
+                //System.out.println(userDetails);
+                if (jwtService.validateToken(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            } else if (!uri.equals("/users/login") &&
+                    !uri.equals("/users/create") &&
+                    !uri.equals("/products/create") &&
+                    !uri.equals("/products") &&
+                    !uri.matches("/products/get/\\d+")) {  // For URIs with variable parts like {id}, you can use regex. Here \d+ matches one or more digits.
+                sendErrorResponse(response, "Token is empty");
+                return;
+            }
+
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
+
+            sendErrorResponse(response, "Invalid JWT token or User is not authenticated");
         }
 
-        filterChain.doFilter(request, response);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("Error: " + message);
     }
 }
 
