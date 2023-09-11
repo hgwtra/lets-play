@@ -31,4 +31,8 @@ public class UserException extends Exception{
         return "Invalid Credentials";
     }
 
+    public static String invalid() {
+        return "Invalid token or user is not authenticated";
+    }
+
 }

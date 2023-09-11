@@ -74,12 +74,17 @@ public class UserController {
     //Get single user - admin, user can only get themselves
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getSingleUser(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails userDetails) throws UserException {
-        Optional<User> user = userRepo.findById(id);
-        if (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")) && user.get().getEmail().equals(userDetails.getUsername())) {
-            return new ResponseEntity<>(userService.getSingleUser(id), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Access denied", HttpStatus.NOT_FOUND);
+        try {
+            Optional<User> user = userRepo.findById(id);
+            if (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")) && user.get().getEmail().equals(userDetails.getUsername())) {
+                return new ResponseEntity<>(userService.getSingleUser(id), HttpStatus.OK);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+            }
+        } catch (UserException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token or user is not authenticated");
         }
+
     }
 
 

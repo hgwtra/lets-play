@@ -37,13 +37,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
          return http.csrf(csrf -> csrf.disable())
+                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                 .authenticationProvider(authenticationProvider())
+                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/users/create","/users/login", "/products/create", "/products", "/products/get/{id}").permitAll()
                         .anyRequest().authenticated()
                 )
-                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                 .authenticationProvider(authenticationProvider())
-                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                  .build();
     }
 
