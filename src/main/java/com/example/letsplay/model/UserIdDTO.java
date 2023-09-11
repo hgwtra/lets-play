@@ -10,10 +10,10 @@ import lombok.Setter;
 @Getter
 @Setter
 
-public class ProductDTO {
+public class UserIdDTO {
     private String id;
     private String name;
-    private String description;
-    private double price;
-    private String owner;
+    private String email;
+    private String role;
 }
+

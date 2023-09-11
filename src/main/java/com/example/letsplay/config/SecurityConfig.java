@@ -41,7 +41,7 @@ public class SecurityConfig {
                  .authenticationProvider(authenticationProvider())
                  .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/create","/users/login", "/products/create", "/products", "/products/get/{id}").permitAll()
+                        .requestMatchers("/users/create","/users/login", "/products", "/products/get/{id}" ).permitAll()
                         .anyRequest().authenticated()
                 )
                  .build();

@@ -4,6 +4,7 @@ import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.Product;
 import com.example.letsplay.model.User;
 import com.example.letsplay.model.UserDTO;
+import com.example.letsplay.model.UserIdDTO;
 import com.example.letsplay.repository.ProductRepository;
 import com.example.letsplay.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -29,12 +30,23 @@ public class UserServiceImplementation implements UserService{
     @Autowired
     private ModelMapper modelMapper;
 
+    //Covert to DTO
     public UserDTO convertToDto(User user) {
         return modelMapper.map(user, UserDTO.class);
     }
     public List<UserDTO> convertToDtos(List<User> users) {
         return users.stream()
                 .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    //Covert to DTO to get UserId
+    public UserIdDTO convertToIdDto(User user) {
+        return modelMapper.map(user, UserIdDTO.class);
+    }
+    public List<UserIdDTO> convertToIdDtos(List<User> users) {
+        return users.stream()
+                .map(this::convertToIdDto)
                 .collect(Collectors.toList());
     }
 
@@ -101,6 +113,18 @@ public class UserServiceImplementation implements UserService{
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public List<UserIdDTO> getAllUsersByAdmin() throws ConstraintViolationException, UserException {
+        List<User> allUsersList = userRepo.findAll();
+        List<UserIdDTO> allUsers = convertToIdDtos(allUsersList);
+        if (!allUsers.isEmpty()) {
+            return allUsers;
+        } else {
+            return new ArrayList<UserIdDTO>();
+        }
+    }
+
+    @Override
     public UserDTO getSingleUser(String id) throws ConstraintViolationException, UserException {
         Optional<User> singleUser = userRepo.findById(id);
         if (!singleUser.isPresent()) {
@@ -112,27 +136,24 @@ public class UserServiceImplementation implements UserService{
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void updateUser(String id, User user) throws UserException {
         Optional<User> userWithId = userRepo.findById(id);
         Optional<User> userWithSameEmail = userRepo.findByEmail(user.getEmail());
 
         if (userWithId.isPresent()){
-            if(userWithSameEmail.isPresent() && !userWithSameEmail.get().getId().equals(id)) {
-                throw new UserException(UserException.userAlreadyExists());
-            } else {
-                User userToUpdate = userWithId.get();
-                userToUpdate.setName(removeExtraSpaces(user.getName()));
-                userToUpdate.setEmail(user.getEmail());
-                userToUpdate.setPassword(removeExtraSpaces(user.getPassword()));
-                userToUpdate.setRole(user.getRole().toUpperCase());
+            User userToUpdate = userWithId.get();
+            userToUpdate.setName(removeExtraSpaces(user.getName()));
+            userToUpdate.setEmail(user.getEmail());
+            userToUpdate.setPassword(removeExtraSpaces(user.getPassword()));
+            userToUpdate.setRole(user.getRole().toUpperCase());
 
-                if (!isValid(userToUpdate)) {
-                    throw new UserException(UserException.invalidUpdates());
-                }
-                //add salt
-                userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
-                userRepo.save(userToUpdate);
+            if (!isValid(userToUpdate)) {
+                throw new UserException(UserException.invalidUpdates());
             }
+            //add salt
+            userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
+            userRepo.save(userToUpdate);
         } else {
             throw new UserException(UserException.NotFoundException(id));
         }
@@ -140,6 +161,7 @@ public class UserServiceImplementation implements UserService{
 
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteUser(String id) throws ConstraintViolationException, UserException {
         Optional<User> userOptional = userRepo.findById(id);
         if (!userOptional.isPresent()){

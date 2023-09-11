@@ -15,6 +15,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,8 +34,9 @@ public class ProductController {
         return new ResponseEntity<>(productList, !productList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
-    //Create a new product - everyone
+    //Create a new product - logged-in users
     @PostMapping("/products/create")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     public ResponseEntity<?> createProducts(@RequestBody Product product){
         try {
             productService.createProduct(product);
@@ -49,7 +51,7 @@ public class ProductController {
 
     }
 
-    //Get single product - everyone
+    //Get single product - logged-in users
     @GetMapping("/products/get/{id}")
     public ResponseEntity<?> getSingleProduct(@PathVariable("id") String id){
         try {
@@ -58,9 +60,10 @@ public class ProductController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
     }
+
     //Update a product - admin and users
     @PutMapping("/products/update/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     public ResponseEntity<?> updateProductById(@PathVariable("id") String id, @RequestBody Product product) throws ProductException{
         try {
             productService.updateProduct(id, product);
@@ -72,8 +75,9 @@ public class ProductController {
         }
     }
 
+    //Update a product - admin
     @DeleteMapping("/products/delete/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<?> deleteProductById(@PathVariable("id") String id) throws ProductException {
         try{
             productService.deleteProduct(id);

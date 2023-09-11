@@ -10,6 +10,7 @@ import com.example.letsplay.repository.ProductRepository;
 import com.example.letsplay.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +64,7 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public void createProduct(Product product) throws ConstraintViolationException, ProductException {
         Optional<Product> productOptional = productRepo.findByProduct(product);
         if (productOptional.isPresent()) {
@@ -103,6 +105,7 @@ public class ProductServiceImplementation implements ProductService{
 
     //what if a user has 2 identical products
     @Override
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_USER')")
     public void updateProduct(String id, Product product) throws ConstraintViolationException, ProductException {
         Optional<Product> productWithId = productRepo.findById(id);
         //Optional<Product> productWithSame? = productRepo.findBy?(product.get?());
@@ -122,6 +125,7 @@ public class ProductServiceImplementation implements ProductService{
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteProduct(String id) throws ConstraintViolationException, ProductException {
         Optional<Product> productOptional = productRepo.findById(id);
         if (!productOptional.isPresent()){

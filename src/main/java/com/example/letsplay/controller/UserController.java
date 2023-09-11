@@ -7,6 +7,7 @@ import com.example.letsplay.exception.UserException;
 import com.example.letsplay.model.User;
 import com.example.letsplay.model.UserAuthentication;
 import com.example.letsplay.model.UserDTO;
+import com.example.letsplay.model.UserIdDTO;
 import com.example.letsplay.repository.UserRepository;
 import com.example.letsplay.service.JwtService;
 import com.example.letsplay.service.UserService;
@@ -48,11 +49,19 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
 
-
+    //Users can get the list of users without userId
     @GetMapping("/users/all")
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
     public ResponseEntity<?> getAllUsers() throws UserException {
         List<UserDTO> userList = userService.getAllUser();
+        return new ResponseEntity<>(userList, !userList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+    }
+
+    //Admin can get the list of users with userId
+    @GetMapping("/usersByAdmin/all")
+    @Secured({"ROLE_ADMIN"})
+    public ResponseEntity<?> getAllUsersByAdmin() throws UserException {
+        List<UserIdDTO> userList = userService.getAllUsersByAdmin();
         return new ResponseEntity<>(userList, !userList.isEmpty() ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
@@ -73,6 +82,7 @@ public class UserController {
 
     //Get single user - admin, user can only get themselves
     @GetMapping("/users/{id}")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     public ResponseEntity<?> getSingleUser(@PathVariable("id") String id, @AuthenticationPrincipal UserDetails userDetails) throws UserException {
         try {
             Optional<User> user = userRepo.findById(id);
@@ -88,12 +98,12 @@ public class UserController {
     }
 
 
-    //Update a user - admin, user can only update themselves
+    //Update a user : only admin
     @PutMapping("/users/{id}")
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<?> updateById(
             @PathVariable("id") String id,
-            @RequestBody User user,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestBody User user) {
 
         Optional<User> existingUser = userRepo.findById(id);
 
@@ -101,24 +111,18 @@ public class UserController {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
 
-        User sameUser = existingUser.get();
-
-        if (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN")) || (userDetails.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")) && user.getEmail().equals(userDetails.getUsername()))) {
-            try {
-                userService.updateUser(id, user);
-                return new ResponseEntity<>("Updated User with id " + id, HttpStatus.OK);
-
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-            } catch (UserException e) {
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-            }
-        } else {
-            return new ResponseEntity<>("Access denied", HttpStatus.FORBIDDEN);
+        try {
+            userService.updateUser(id, user);
+            return new ResponseEntity<>("Updated User with id " + id, HttpStatus.OK);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        } catch (UserException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
         }
+
     }
 
-    //Delete a user - admin
+    //Delete a user : only admin
     @DeleteMapping("/users/delete/{id}")
     @Secured({"ROLE_ADMIN"})
     public ResponseEntity<?> deleteById(@PathVariable("id") String id) throws UserException {

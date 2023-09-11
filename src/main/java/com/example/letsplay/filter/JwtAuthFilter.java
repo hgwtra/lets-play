@@ -41,7 +41,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     }
             }
 
-            String uri = request.getRequestURI();
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                UserDetails userDetails = userInfoService.loadUserByUsername(username);
@@ -51,18 +50,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
-            } else if (!uri.equals("/users/login") &&
-                    !uri.equals("/users/create") &&
-                    !uri.equals("/products/create") &&
-                    !uri.equals("/products") &&
-                    !uri.matches("/products/get/\\d+")) {  // For URIs with variable parts like {id}, you can use regex. Here \d+ matches one or more digits.
-                sendErrorResponse(response, "Token is empty");
+            } else if (!request.getRequestURI().equals("/users/login") &&
+                    !request.getRequestURI().equals("/users/create") &&
+                    !request.getRequestURI().equals("/products") &&
+                    request.getRequestURI().matches("/products/get/\\d+")) {  // For URIs with variable parts like {id}, you can use regex. Here \d+ matches one or more digits.
+                sendErrorResponse(response, "Authentication is needed");
                 return;
             }
 
             filterChain.doFilter(request, response);
-        } catch (Exception e) {
 
+        } catch (Exception e) {
             sendErrorResponse(response, "Invalid JWT token or User is not authenticated");
         }
 
