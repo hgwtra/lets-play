@@ -141,10 +141,8 @@ public class UserController {
 
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
-                String salt = user.getId();
 
-                String saltedPassword = userInfo.getPassword() + salt;
-                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userInfo.getUsername(), saltedPassword));
+                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userInfo.getUsername(), userInfo.getPassword()));
 
                 if (authentication.isAuthenticated()) {
                     return ResponseEntity.ok(jwtService.generateToken(userInfo.getUsername()));

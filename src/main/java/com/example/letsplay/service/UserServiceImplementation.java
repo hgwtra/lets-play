@@ -81,16 +81,7 @@ public class UserServiceImplementation implements UserService{
             if (isValid(user)) {
                 user.setRole(user.getRole().toUpperCase());
                 user.setName(removeExtraSpaces(user.getName()));
-                String userId = "";
-                do {
-                    userId = UUID.randomUUID().toString().split("-")[0];
-                } while (userRepo.existsById(userId));
-                user.setId(userId);
-                String salt = user.getId();
-                String saltedPassword = user.getPassword() + salt;
-                //System.out.println("salted Password when create " + saltedPassword);
-                String hashedPassword = passwordEncoder.encode(saltedPassword);
-                user.setPassword(hashedPassword);
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
                 userRepo.save(user);
             } else {
                 throw new ConstraintViolationException("Fields can't be all spaces\nRole must either be ROLE_ADMIN or ROLE_USER\nPassword must be at least 4 characters, maximum 50 characters, no spaces allowed", null);
